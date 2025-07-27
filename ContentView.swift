@@ -31,7 +31,6 @@ struct ContentView: View {
     @State private var selectedItem: PhotosPickerItem?
     @State private var showingSaveAlert = false
     @State private var saveError = false
-    @State private var useiPhoneCorners = false
     
     enum BackgroundOption: String, CaseIterable {
         case gradient1 = "Blue Gradient"
@@ -69,8 +68,7 @@ struct ContentView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
+            VStack(spacing: 20) {
                 // Preview Area
                 ZStack {
                     selectedBackground.background
@@ -83,7 +81,7 @@ struct ContentView: View {
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
                                         .frame(maxWidth: UIScreen.main.bounds.width * imageScale, maxHeight: 300 * imageScale)
-                                        .clipShape(RoundedRectangle(cornerRadius: useiPhoneCorners ? 40 : cornerRadius))
+                                        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
                                         .shadow(radius: 10)
                                 } else {
                                     VStack {
@@ -144,22 +142,11 @@ struct ContentView: View {
                         }
                     }
                     
-                    // iPhone Style Toggle
-                    HStack {
-                        Text("iPhone Style Corners")
-                            .font(.headline)
-                        Spacer()
-                        Toggle("", isOn: $useiPhoneCorners)
-                            .labelsHidden()
-                    }
-                    
-                    // Corner Radius Slider (disabled when iPhone style is on)
+                    // Corner Radius Slider
                     VStack(alignment: .leading) {
                         Text("Corner Radius: \(Int(cornerRadius))")
                             .font(.headline)
-                            .foregroundColor(useiPhoneCorners ? Color.gray : Color.primary)
                         Slider(value: $cornerRadius, in: 0...50)
-                            .disabled(useiPhoneCorners)
                     }
                     
                     // Image Scale Slider
@@ -182,8 +169,7 @@ struct ContentView: View {
                 }
                 .padding(.horizontal)
                 
-                }
-                .padding(.bottom)
+                Spacer()
             }
             .navigationTitle("Screenshots for X")
             .photosPicker(isPresented: $showingImagePicker, selection: $selectedItem, matching: .images)
@@ -216,7 +202,7 @@ struct ContentView: View {
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(maxWidth: 2000 * imageScale, maxHeight: 2000 * imageScale)
-                                .clipShape(RoundedRectangle(cornerRadius: useiPhoneCorners ? 160 : cornerRadius * 3))
+                                .clipShape(RoundedRectangle(cornerRadius: cornerRadius * 3))
                                 .shadow(radius: 30)
                         }
                     }
