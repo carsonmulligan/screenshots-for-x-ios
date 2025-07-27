@@ -31,6 +31,7 @@ struct ContentView: View {
     @State private var selectedItem: PhotosPickerItem?
     @State private var showingSaveAlert = false
     @State private var saveError = false
+    @State private var useIOSStyle = false
     
     enum BackgroundOption: String, CaseIterable {
         case gradient1 = "Blue Gradient"
@@ -77,11 +78,16 @@ struct ContentView: View {
                         .overlay(
                             Group {
                                 if let image = selectedImage {
+                                    let frameWidth = UIScreen.main.bounds.width * imageScale
+                                    let frameHeight = 300 * imageScale
+                                    let minDimension = min(frameWidth, frameHeight)
+                                    let radius = useIOSStyle ? minDimension * cornerRadius / 100 * 0.225 : cornerRadius * imageScale * 2
+                                    
                                     Image(uiImage: image)
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
-                                        .frame(maxWidth: UIScreen.main.bounds.width * imageScale, maxHeight: 300 * imageScale)
-                                        .clipShape(RoundedRectangle(cornerRadius: cornerRadius * imageScale * 2))
+                                        .frame(maxWidth: frameWidth, maxHeight: frameHeight)
+                                        .clipShape(RoundedRectangle(cornerRadius: radius, style: useIOSStyle ? .continuous : .circular))
                                         .shadow(radius: 10)
                                 } else {
                                     VStack {
@@ -142,11 +148,16 @@ struct ContentView: View {
                         }
                     }
                     
-                    // Corner Radius Slider
+                    // Corner Radius Controls
                     VStack(alignment: .leading) {
-                        Text("Corner Radius: \(Int(cornerRadius))")
-                            .font(.headline)
-                        Slider(value: $cornerRadius, in: 0...50)
+                        HStack {
+                            Text("Corner Radius: \(Int(cornerRadius))")
+                                .font(.headline)
+                            Spacer()
+                            Toggle("iOS Style", isOn: $useIOSStyle)
+                                .toggleStyle(SwitchToggleStyle(tint: .blue))
+                        }
+                        Slider(value: $cornerRadius, in: 0...100)
                     }
                     
                     // Image Scale Slider
@@ -198,11 +209,14 @@ struct ContentView: View {
                 .overlay(
                     Group {
                         if let image = selectedImage {
+                            let frameSize = 2000 * imageScale
+                            let radius = useIOSStyle ? frameSize * cornerRadius / 100 * 0.225 : cornerRadius * imageScale * 20
+                            
                             Image(uiImage: image)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
-                                .frame(maxWidth: 2000 * imageScale, maxHeight: 2000 * imageScale)
-                                .clipShape(RoundedRectangle(cornerRadius: cornerRadius * imageScale * 20))
+                                .frame(maxWidth: frameSize, maxHeight: frameSize)
+                                .clipShape(RoundedRectangle(cornerRadius: radius, style: useIOSStyle ? .continuous : .circular))
                                 .shadow(radius: 30)
                         }
                     }
