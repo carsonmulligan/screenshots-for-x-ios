@@ -67,19 +67,28 @@ struct ContentView: View {
         }
     }
     
+    func calculateRadius(for dimension: CGFloat) -> CGFloat {
+        if useIOSStyle {
+            return dimension * cornerRadius / 100 * 0.225
+        } else {
+            return cornerRadius * imageScale * 2
+        }
+    }
+    
     @ViewBuilder
     var imageOverlay: some View {
         if let image = selectedImage {
             let frameWidth = UIScreen.main.bounds.width * imageScale
             let frameHeight = 300 * imageScale
             let minDimension = min(frameWidth, frameHeight)
-            let radius = useIOSStyle ? minDimension * cornerRadius / 100 * 0.225 : cornerRadius * imageScale * 2
+            let radius = calculateRadius(for: minDimension)
+            let cornerStyle: RoundedCornerStyle = useIOSStyle ? .continuous : .circular
             
             Image(uiImage: image)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(maxWidth: frameWidth, maxHeight: frameHeight)
-                .clipShape(RoundedRectangle(cornerRadius: radius, style: useIOSStyle ? .continuous : .circular))
+                .clipShape(RoundedRectangle(cornerRadius: radius, style: cornerStyle))
                 .shadow(radius: 10)
         } else {
             VStack {
@@ -185,9 +194,9 @@ struct ContentView: View {
             }
             .navigationTitle("Screenshots for X")
             .photosPicker(isPresented: $showingImagePicker, selection: $selectedItem, matching: .images)
-            .onChange(of: selectedItem) { _ in
+            .onChange(of: selectedItem) { oldValue, newValue in
                 Task {
-                    if let item = selectedItem,
+                    if let item = newValue,
                        let data = try? await item.loadTransferable(type: Data.self),
                        let image = UIImage(data: data) {
                         selectedImage = image
@@ -214,13 +223,14 @@ struct ContentView: View {
     func exportImageOverlay() -> some View {
         if let image = selectedImage {
             let frameSize = 2000 * imageScale
-            let radius = useIOSStyle ? frameSize * cornerRadius / 100 * 0.225 : cornerRadius * imageScale * 20
+            let radius = calculateRadius(for: frameSize) * 10  // Scale up for export
+            let cornerStyle: RoundedCornerStyle = useIOSStyle ? .continuous : .circular
             
             Image(uiImage: image)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(maxWidth: frameSize, maxHeight: frameSize)
-                .clipShape(RoundedRectangle(cornerRadius: radius, style: useIOSStyle ? .continuous : .circular))
+                .clipShape(RoundedRectangle(cornerRadius: radius, style: cornerStyle))
                 .shadow(radius: 30)
         }
     }
