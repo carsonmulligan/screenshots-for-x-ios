@@ -67,6 +67,31 @@ struct ContentView: View {
         }
     }
     
+    @ViewBuilder
+    var imageOverlay: some View {
+        if let image = selectedImage {
+            let frameWidth = UIScreen.main.bounds.width * imageScale
+            let frameHeight = 300 * imageScale
+            let minDimension = min(frameWidth, frameHeight)
+            let radius = useIOSStyle ? minDimension * cornerRadius / 100 * 0.225 : cornerRadius * imageScale * 2
+            
+            Image(uiImage: image)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(maxWidth: frameWidth, maxHeight: frameHeight)
+                .clipShape(RoundedRectangle(cornerRadius: radius, style: useIOSStyle ? .continuous : .circular))
+                .shadow(radius: 10)
+        } else {
+            VStack {
+                Image(systemName: "photo.badge.plus")
+                    .font(.system(size: 50))
+                    .foregroundColor(.white.opacity(0.7))
+                Text("Tap to add screenshot")
+                    .foregroundColor(.white.opacity(0.7))
+            }
+        }
+    }
+    
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
@@ -75,31 +100,7 @@ struct ContentView: View {
                     selectedBackground.background
                         .aspectRatio(1, contentMode: .fit)
                         .frame(maxHeight: 400)
-                        .overlay(
-                            Group {
-                                if let image = selectedImage {
-                                    let frameWidth = UIScreen.main.bounds.width * imageScale
-                                    let frameHeight = 300 * imageScale
-                                    let minDimension = min(frameWidth, frameHeight)
-                                    let radius = useIOSStyle ? minDimension * cornerRadius / 100 * 0.225 : cornerRadius * imageScale * 2
-                                    
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(maxWidth: frameWidth, maxHeight: frameHeight)
-                                        .clipShape(RoundedRectangle(cornerRadius: radius, style: useIOSStyle ? .continuous : .circular))
-                                        .shadow(radius: 10)
-                                } else {
-                                    VStack {
-                                        Image(systemName: "photo.badge.plus")
-                                            .font(.system(size: 50))
-                                            .foregroundColor(.white.opacity(0.7))
-                                        Text("Tap to add screenshot")
-                                            .foregroundColor(.white.opacity(0.7))
-                                    }
-                                }
-                            }
-                        )
+                        .overlay(imageOverlay)
                         .cornerRadius(12)
                         .shadow(radius: 5)
                         .onTapGesture {
@@ -201,27 +202,31 @@ struct ContentView: View {
         }
     }
     
+    @ViewBuilder
+    func exportContent() -> some View {
+        selectedBackground.background
+            .aspectRatio(1, contentMode: .fit)
+            .frame(width: 2000, height: 2000)
+            .overlay(exportImageOverlay())
+    }
+    
+    @ViewBuilder
+    func exportImageOverlay() -> some View {
+        if let image = selectedImage {
+            let frameSize = 2000 * imageScale
+            let radius = useIOSStyle ? frameSize * cornerRadius / 100 * 0.225 : cornerRadius * imageScale * 20
+            
+            Image(uiImage: image)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(maxWidth: frameSize, maxHeight: frameSize)
+                .clipShape(RoundedRectangle(cornerRadius: radius, style: useIOSStyle ? .continuous : .circular))
+                .shadow(radius: 30)
+        }
+    }
+    
     func exportImage() {
-        let renderer = ImageRenderer(content: 
-            selectedBackground.background
-                .aspectRatio(1, contentMode: .fit)
-                .frame(width: 2000, height: 2000)
-                .overlay(
-                    Group {
-                        if let image = selectedImage {
-                            let frameSize = 2000 * imageScale
-                            let radius = useIOSStyle ? frameSize * cornerRadius / 100 * 0.225 : cornerRadius * imageScale * 20
-                            
-                            Image(uiImage: image)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(maxWidth: frameSize, maxHeight: frameSize)
-                                .clipShape(RoundedRectangle(cornerRadius: radius, style: useIOSStyle ? .continuous : .circular))
-                                .shadow(radius: 30)
-                        }
-                    }
-                )
-        )
+        let renderer = ImageRenderer(content: exportContent())
         
         renderer.scale = 1.0
         
