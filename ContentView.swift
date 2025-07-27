@@ -81,7 +81,7 @@ struct ContentView: View {
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
                                         .frame(maxWidth: UIScreen.main.bounds.width * imageScale, maxHeight: 300 * imageScale)
-                                        .clipShape(RoundedRectangle(cornerRadius: min(UIScreen.main.bounds.width * imageScale, 300 * imageScale) * cornerRadius / 200))
+                                        .clipShape(RoundedRectangle(cornerRadius: cornerRadius * imageScale * 2))
                                         .shadow(radius: 10)
                                 } else {
                                     VStack {
@@ -144,9 +144,9 @@ struct ContentView: View {
                     
                     // Corner Radius Slider
                     VStack(alignment: .leading) {
-                        Text("Corner Radius: \(Int(cornerRadius))%")
+                        Text("Corner Radius: \(Int(cornerRadius))")
                             .font(.headline)
-                        Slider(value: $cornerRadius, in: 0...100)
+                        Slider(value: $cornerRadius, in: 0...50)
                     }
                     
                     // Image Scale Slider
@@ -202,7 +202,7 @@ struct ContentView: View {
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(maxWidth: 2000 * imageScale, maxHeight: 2000 * imageScale)
-                                .clipShape(RoundedRectangle(cornerRadius: 2000 * imageScale * cornerRadius / 200))
+                                .clipShape(RoundedRectangle(cornerRadius: cornerRadius * imageScale * 20))
                                 .shadow(radius: 30)
                         }
                     }
