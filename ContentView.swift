@@ -118,14 +118,14 @@ struct ContentView: View {
     
     var body: some View {
         NavigationStack {
-            GeometryReader { geometry in
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 16) {
-                        // Preview Area
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 16) {
+                    // Preview Area
+                    GeometryReader { geometry in
                         ZStack {
                             selectedBackground.background
                                 .aspectRatio(1, contentMode: .fit)
-                                .frame(maxHeight: min(geometry.size.height * 0.4, 350))
+                                .frame(maxWidth: geometry.size.width)
                                 .overlay(imageOverlay)
                                 .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                                 .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: 15)
@@ -136,8 +136,10 @@ struct ContentView: View {
                                     }
                                 }
                         }
-                        .padding(.horizontal)
-                        .padding(.top, 4)
+                    }
+                    .aspectRatio(1, contentMode: .fit)
+                    .padding(.horizontal)
+                    .padding(.top, 4)
                 
                     // Add/Change Image Button
                     if selectedImage != nil {
@@ -229,18 +231,21 @@ struct ContentView: View {
                                 }
                                 .padding(.horizontal)
                                 
-                                ZStack(alignment: .leading) {
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .fill(Color.gray.opacity(0.2))
-                                        .frame(height: 6)
-                                    
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .fill(Color.blue)
-                                        .frame(width: max(6, CGFloat(cornerRadius) / 50 * (geometry.size.width - 64)), height: 6)
-                                    
-                                    Slider(value: $cornerRadius, in: 0...50)
-                                        .tint(.clear)
+                                GeometryReader { geometry in
+                                    ZStack(alignment: .leading) {
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(Color.gray.opacity(0.2))
+                                            .frame(height: 6)
+                                        
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(Color.blue)
+                                            .frame(width: max(6, CGFloat(cornerRadius) / 50 * (geometry.size.width)), height: 6)
+                                        
+                                        Slider(value: $cornerRadius, in: 0...50)
+                                            .tint(.clear)
+                                    }
                                 }
+                                .frame(height: 6)
                                 .padding(.horizontal)
                             }
                     
@@ -258,18 +263,21 @@ struct ContentView: View {
                                 }
                                 .padding(.horizontal)
                                 
-                                ZStack(alignment: .leading) {
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .fill(Color.gray.opacity(0.2))
-                                        .frame(height: 6)
-                                    
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .fill(Color.blue)
-                                        .frame(width: max(6, CGFloat((imageScale - 0.3) / 0.7) * (geometry.size.width - 64)), height: 6)
-                                    
-                                    Slider(value: $imageScale, in: 0.3...1.0)
-                                        .tint(.clear)
+                                GeometryReader { geometry in
+                                    ZStack(alignment: .leading) {
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(Color.gray.opacity(0.2))
+                                            .frame(height: 6)
+                                        
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(Color.blue)
+                                            .frame(width: max(6, CGFloat((imageScale - 0.3) / 0.7) * geometry.size.width), height: 6)
+                                        
+                                        Slider(value: $imageScale, in: 0.3...1.0)
+                                            .tint(.clear)
+                                    }
                                 }
+                                .frame(height: 6)
                                 .padding(.horizontal)
                             }
                     
@@ -308,7 +316,7 @@ struct ContentView: View {
                         }
                     }
                 }
-            }
+                .padding(.bottom, 20)
             .navigationTitle("X Screenshots")
             .navigationBarTitleDisplayMode(.large)
             .background(Color(UIColor.systemBackground))
