@@ -117,8 +117,8 @@ struct ContentView: View {
     }
     
     var body: some View {
-        GeometryReader { geometry in
-            NavigationView {
+        NavigationStack {
+            GeometryReader { geometry in
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 16) {
                         // Preview Area
@@ -308,23 +308,24 @@ struct ContentView: View {
                         }
                     }
                 }
-                .navigationTitle("X Screenshots")
-                .navigationBarTitleDisplayMode(.large)
-                .photosPicker(isPresented: $showingImagePicker, selection: $selectedItem, matching: .images)
-                .onChange(of: selectedItem) { oldValue, newValue in
-                    Task {
-                        if let item = newValue,
-                           let data = try? await item.loadTransferable(type: Data.self),
-                           let image = UIImage(data: data) {
-                            selectedImage = image
-                        }
+            }
+            .navigationTitle("X Screenshots")
+            .navigationBarTitleDisplayMode(.large)
+            .background(Color(UIColor.systemBackground))
+            .photosPicker(isPresented: $showingImagePicker, selection: $selectedItem, matching: .images)
+            .onChange(of: selectedItem) { oldValue, newValue in
+                Task {
+                    if let item = newValue,
+                       let data = try? await item.loadTransferable(type: Data.self),
+                       let image = UIImage(data: data) {
+                        selectedImage = image
                     }
                 }
-                .alert(saveError ? "Save Failed" : "Image Saved!", isPresented: $showingSaveAlert) {
-                    Button("OK") { }
-                } message: {
-                    Text(saveError ? "Failed to save image to Photos. Please check permissions." : "Your image has been saved to Photos successfully!")
-                }
+            }
+            .alert(saveError ? "Save Failed" : "Image Saved!", isPresented: $showingSaveAlert) {
+                Button("OK") { }
+            } message: {
+                Text(saveError ? "Failed to save image to Photos. Please check permissions." : "Your image has been saved to Photos successfully!")
             }
         }
     }
