@@ -25,13 +25,14 @@ class ImageSaver: NSObject {
 struct ContentView: View {
     @State private var selectedImage: UIImage?
     @State private var selectedBackground = BackgroundOption.gradient1
-    @State private var cornerRadius: CGFloat = 0
-    @State private var imageScale: CGFloat = 0.8
+    @State private var cornerRadius: CGFloat = 20
+    @State private var imageScale: CGFloat = 0.85
     @State private var showingImagePicker = false
     @State private var selectedItem: PhotosPickerItem?
     @State private var showingSaveAlert = false
     @State private var saveError = false
-    @State private var useIOSStyle = false
+    @State private var useIOSStyle = true
+    @State private var isExporting = false
     
     enum BackgroundOption: String, CaseIterable {
         case gradient1 = "Blue Gradient"
@@ -67,21 +68,24 @@ struct ContentView: View {
         }
     }
     
-    func calculateRadius(for dimension: CGFloat) -> CGFloat {
+    func calculateRadius(for image: UIImage? = nil) -> CGFloat {
+        // Fixed corner radius that doesn't scale with image size
+        // This gives us actual rounded corners, not a circular shape
         if useIOSStyle {
-            return dimension * cornerRadius / 100 * 0.225
+            // iOS-style continuous corners
+            return cornerRadius * 1.5
         } else {
-            return cornerRadius * imageScale * 2
+            // Standard rounded corners
+            return cornerRadius
         }
     }
     
     @ViewBuilder
     var imageOverlay: some View {
         if let image = selectedImage {
-            let frameWidth = UIScreen.main.bounds.width * imageScale
+            let frameWidth = UIScreen.main.bounds.width * imageScale * 0.85
             let frameHeight = 300 * imageScale
-            let minDimension = min(frameWidth, frameHeight)
-            let radius = calculateRadius(for: minDimension)
+            let radius = calculateRadius()
             let cornerStyle: RoundedCornerStyle = useIOSStyle ? .continuous : .circular
             
             Image(uiImage: image)
@@ -89,124 +93,238 @@ struct ContentView: View {
                 .aspectRatio(contentMode: .fit)
                 .frame(maxWidth: frameWidth, maxHeight: frameHeight)
                 .clipShape(RoundedRectangle(cornerRadius: radius, style: cornerStyle))
-                .shadow(radius: 10)
+                .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
+                .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+                .scaleEffect(isExporting ? 0.95 : 1.0)
+                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isExporting)
         } else {
-            VStack {
-                Image(systemName: "photo.badge.plus")
-                    .font(.system(size: 50))
-                    .foregroundColor(.white.opacity(0.7))
-                Text("Tap to add screenshot")
-                    .foregroundColor(.white.opacity(0.7))
+            VStack(spacing: 12) {
+                Image(systemName: "photo.stack")
+                    .font(.system(size: 48, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.9))
+                    .symbolRenderingMode(.hierarchical)
+                Text("Add Screenshot")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.8))
             }
+            .padding(40)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(.white.opacity(0.1))
+                    .strokeBorder(.white.opacity(0.2), lineWidth: 1)
+            )
         }
     }
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 20) {
-                // Preview Area
-                ZStack {
-                    selectedBackground.background
-                        .aspectRatio(1, contentMode: .fit)
-                        .frame(maxHeight: 400)
-                        .overlay(imageOverlay)
-                        .cornerRadius(12)
-                        .shadow(radius: 5)
-                        .onTapGesture {
-                            showingImagePicker = true
-                        }
-                }
-                .padding(.horizontal)
-                
-                // Add Image Button
-                Button(action: { showingImagePicker = true }) {
-                    Label(selectedImage == nil ? "Choose Screenshot" : "Change Screenshot", systemImage: "photo")
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.gray.opacity(0.2))
-                        .cornerRadius(10)
-                }
-                .padding(.horizontal)
-                
-                // Controls
-                VStack(spacing: 15) {
-                    // Background Selection
-                    VStack(alignment: .leading) {
-                        Text("Background")
-                            .font(.headline)
-                        
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 10) {
-                                ForEach(BackgroundOption.allCases, id: \.self) { option in
-                                    VStack {
-                                        option.background
-                                            .frame(width: 60, height: 40)
-                                            .cornerRadius(8)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 8)
-                                                    .stroke(selectedBackground == option ? Color.blue : Color.clear, lineWidth: 3)
-                                            )
-                                            .onTapGesture {
-                                                selectedBackground = option
-                                            }
-                                        Text(option.rawValue)
-                                            .font(.caption)
-                                            .lineLimit(1)
+        GeometryReader { geometry in
+            NavigationView {
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 16) {
+                        // Preview Area
+                        ZStack {
+                            selectedBackground.background
+                                .aspectRatio(1, contentMode: .fit)
+                                .frame(maxHeight: min(geometry.size.height * 0.4, 350))
+                                .overlay(imageOverlay)
+                                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                                .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: 15)
+                                .shadow(color: .black.opacity(0.08), radius: 10, x: 0, y: 5)
+                                .onTapGesture {
+                                    if selectedImage == nil {
+                                        showingImagePicker = true
                                     }
                                 }
-                            }
                         }
-                    }
-                    
-                    // Corner Radius Controls
-                    VStack(alignment: .leading) {
-                        HStack {
-                            Text("Corner Radius: \(Int(cornerRadius))")
-                                .font(.headline)
-                            Spacer()
-                            Toggle("iOS Style", isOn: $useIOSStyle)
-                                .toggleStyle(SwitchToggleStyle(tint: .blue))
-                        }
-                        Slider(value: $cornerRadius, in: 0...100)
-                    }
-                    
-                    // Image Scale Slider
-                    VStack(alignment: .leading) {
-                        Text("Image Size: \(Int(imageScale * 100))%")
-                            .font(.headline)
-                        Slider(value: $imageScale, in: 0.3...1.0)
-                    }
-                    
-                    // Export Button
-                    Button(action: exportImage) {
-                        Label("Save to Photos", systemImage: "square.and.arrow.down")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
-                    .disabled(selectedImage == nil)
-                }
-                .padding(.horizontal)
+                        .padding(.horizontal)
+                        .padding(.top, 4)
                 
-                Spacer()
-            }
-            .navigationTitle("Screenshots for X")
-            .photosPicker(isPresented: $showingImagePicker, selection: $selectedItem, matching: .images)
-            .onChange(of: selectedItem) { oldValue, newValue in
-                Task {
-                    if let item = newValue,
-                       let data = try? await item.loadTransferable(type: Data.self),
-                       let image = UIImage(data: data) {
-                        selectedImage = image
+                    // Add/Change Image Button
+                    if selectedImage != nil {
+                        Button(action: { showingImagePicker = true }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                                    .font(.system(size: 16, weight: .medium))
+                                Text("Change Screenshot")
+                                    .font(.system(size: 16, weight: .medium))
+                            }
+                            .foregroundColor(.blue)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(Color.blue.opacity(0.1))
+                                    .strokeBorder(Color.blue.opacity(0.2), lineWidth: 1)
+                            )
+                        }
+                        .padding(.horizontal)
+                    }
+                
+                        // Controls
+                        VStack(spacing: 16) {
+                            // Background Selection
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Background")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.primary)
+                                    .padding(.horizontal)
+                                
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 10) {
+                                        ForEach(BackgroundOption.allCases, id: \.self) { option in
+                                            VStack(spacing: 4) {
+                                                option.background
+                                                    .frame(width: 64, height: 64)
+                                                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                                    .overlay(
+                                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                                            .strokeBorder(
+                                                                selectedBackground == option ? 
+                                                                Color.blue : Color.gray.opacity(0.2), 
+                                                                lineWidth: selectedBackground == option ? 3 : 1
+                                                            )
+                                                    )
+                                                    .shadow(color: .black.opacity(selectedBackground == option ? 0.1 : 0.05), 
+                                                           radius: selectedBackground == option ? 6 : 3, 
+                                                           x: 0, y: 2)
+                                                    .scaleEffect(selectedBackground == option ? 0.95 : 1.0)
+                                                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedBackground)
+                                                    .onTapGesture {
+                                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                                            selectedBackground = option
+                                                        }
+                                                    }
+                                                Text(option.rawValue)
+                                                    .font(.system(size: 10, weight: .medium))
+                                                    .foregroundColor(selectedBackground == option ? .blue : .secondary)
+                                                    .lineLimit(1)
+                                                    .frame(width: 64)
+                                            }
+                                        }
+                                    }
+                                    .padding(.horizontal)
+                                }
+                            }
+                    
+                            // Corner Radius Controls
+                            VStack(alignment: .leading, spacing: 10) {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Corner Radius")
+                                            .font(.system(size: 16, weight: .semibold))
+                                        Text("\(Int(cornerRadius)) pixels")
+                                            .font(.system(size: 12, weight: .regular))
+                                            .foregroundColor(.secondary)
+                                    }
+                                    Spacer()
+                                    VStack(alignment: .trailing, spacing: 2) {
+                                        Toggle("", isOn: $useIOSStyle)
+                                            .labelsHidden()
+                                            .toggleStyle(SwitchToggleStyle(tint: .blue))
+                                            .scaleEffect(0.9)
+                                        Text(useIOSStyle ? "Smooth" : "Standard")
+                                            .font(.system(size: 10, weight: .medium))
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                                .padding(.horizontal)
+                                
+                                ZStack(alignment: .leading) {
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(Color.gray.opacity(0.2))
+                                        .frame(height: 6)
+                                    
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(Color.blue)
+                                        .frame(width: max(6, CGFloat(cornerRadius) / 50 * (geometry.size.width - 64)), height: 6)
+                                    
+                                    Slider(value: $cornerRadius, in: 0...50)
+                                        .tint(.clear)
+                                }
+                                .padding(.horizontal)
+                            }
+                    
+                            // Image Scale Slider
+                            VStack(alignment: .leading, spacing: 10) {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Image Size")
+                                            .font(.system(size: 16, weight: .semibold))
+                                        Text("\(Int(imageScale * 100))% of canvas")
+                                            .font(.system(size: 12, weight: .regular))
+                                            .foregroundColor(.secondary)
+                                    }
+                                    Spacer()
+                                }
+                                .padding(.horizontal)
+                                
+                                ZStack(alignment: .leading) {
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(Color.gray.opacity(0.2))
+                                        .frame(height: 6)
+                                    
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(Color.blue)
+                                        .frame(width: max(6, CGFloat((imageScale - 0.3) / 0.7) * (geometry.size.width - 64)), height: 6)
+                                    
+                                    Slider(value: $imageScale, in: 0.3...1.0)
+                                        .tint(.clear)
+                                }
+                                .padding(.horizontal)
+                            }
+                    
+                            // Export Button
+                            Button(action: {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    isExporting = true
+                                }
+                                exportImage()
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                        isExporting = false
+                                    }
+                                }
+                            }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "square.and.arrow.down")
+                                        .font(.system(size: 16, weight: .semibold))
+                                    Text("Save to Photos")
+                                        .font(.system(size: 16, weight: .semibold))
+                                }
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(selectedImage != nil ? Color.blue : Color.gray.opacity(0.3))
+                                )
+                                .shadow(color: selectedImage != nil ? .blue.opacity(0.25) : .clear, 
+                                       radius: 12, x: 0, y: 6)
+                                .scaleEffect(isExporting ? 0.95 : 1.0)
+                            }
+                            .disabled(selectedImage == nil)
+                            .padding(.horizontal)
+                            .padding(.bottom, 8)
+                        }
                     }
                 }
-            }
-            .alert(saveError ? "Save Failed" : "Image Saved!", isPresented: $showingSaveAlert) {
-                Button("OK") { }
-            } message: {
-                Text(saveError ? "Failed to save image to Photos. Please check permissions." : "Your image has been saved to Photos successfully!")
+                .navigationTitle("X Screenshots")
+                .navigationBarTitleDisplayMode(.large)
+                .photosPicker(isPresented: $showingImagePicker, selection: $selectedItem, matching: .images)
+                .onChange(of: selectedItem) { oldValue, newValue in
+                    Task {
+                        if let item = newValue,
+                           let data = try? await item.loadTransferable(type: Data.self),
+                           let image = UIImage(data: data) {
+                            selectedImage = image
+                        }
+                    }
+                }
+                .alert(saveError ? "Save Failed" : "Image Saved!", isPresented: $showingSaveAlert) {
+                    Button("OK") { }
+                } message: {
+                    Text(saveError ? "Failed to save image to Photos. Please check permissions." : "Your image has been saved to Photos successfully!")
+                }
             }
         }
     }
@@ -223,7 +341,9 @@ struct ContentView: View {
     func exportImageOverlay() -> some View {
         if let image = selectedImage {
             let frameSize = 2000 * imageScale
-            let radius = calculateRadius(for: frameSize) * 10  // Scale up for export
+            // Scale the corner radius appropriately for the export size
+            let exportScale = 2000.0 / UIScreen.main.bounds.width
+            let radius = calculateRadius() * exportScale * 1.2
             let cornerStyle: RoundedCornerStyle = useIOSStyle ? .continuous : .circular
             
             Image(uiImage: image)
@@ -231,7 +351,8 @@ struct ContentView: View {
                 .aspectRatio(contentMode: .fit)
                 .frame(maxWidth: frameSize, maxHeight: frameSize)
                 .clipShape(RoundedRectangle(cornerRadius: radius, style: cornerStyle))
-                .shadow(radius: 30)
+                .shadow(color: .black.opacity(0.2), radius: 60, x: 0, y: 30)
+                .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: 10)
         }
     }
     
