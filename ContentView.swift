@@ -104,11 +104,11 @@ struct ContentView: View {
                 VStack(spacing: 4) {
                     Text("X Screenshots")
                         .font(.system(size: 28, weight: .bold, design: .default))
-                        .foregroundColor(.primary)
+                        .foregroundColor(.white)
                     
                     Text("Beautiful screenshots for X")
                         .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.white.opacity(0.7))
                 }
                 .padding(.top, 20)
                 .padding(.bottom, 16)
@@ -136,7 +136,7 @@ struct ContentView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Background")
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.white.opacity(0.7))
                             .padding(.horizontal, 24)
                         
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -150,7 +150,7 @@ struct ContentView: View {
                                                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                                                     .strokeBorder(
                                                         selectedBackground == option ? 
-                                                        Color.blue : Color.gray.opacity(0.2), 
+                                                        Color.blue : Color.white.opacity(0.2), 
                                                         lineWidth: selectedBackground == option ? 2.5 : 1
                                                     )
                                             )
@@ -163,7 +163,7 @@ struct ContentView: View {
                                             }
                                         Text(option.rawValue)
                                             .font(.system(size: 11, weight: .medium))
-                                            .foregroundColor(selectedBackground == option ? .blue : .secondary)
+                                            .foregroundColor(selectedBackground == option ? .blue : .white.opacity(0.6))
                                     }
                                 }
                             }
@@ -178,11 +178,11 @@ struct ContentView: View {
                             HStack {
                                 Text("Corners")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.white.opacity(0.7))
                                 Spacer()
                                 Text("\(Int(cornerRadius))")
                                     .font(.system(size: 12, weight: .medium, design: .monospaced))
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(.white)
                             }
                             
                             Slider(value: $cornerRadius, in: 0...40)
@@ -195,11 +195,11 @@ struct ContentView: View {
                             HStack {
                                 Text("Size")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.white.opacity(0.7))
                                 Spacer()
                                 Text("\(Int(imageScale * 100))%")
                                     .font(.system(size: 12, weight: .medium, design: .monospaced))
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(.white)
                             }
                             
                             Slider(value: $imageScale, in: 0.4...1.0)
@@ -256,7 +256,7 @@ struct ContentView: View {
                 
                 Spacer(minLength: 20)
             }
-        .background(Color(UIColor.systemBackground).ignoresSafeArea())
+        .background(Color.black.ignoresSafeArea())
         .photosPicker(isPresented: $showingImagePicker, selection: $selectedItem, matching: .images)
         .onChange(of: selectedItem) { oldValue, newValue in
             Task {
