@@ -99,11 +99,7 @@ struct ContentView: View {
     }
     
     var body: some View {
-        ZStack {
-            Color(UIColor.systemBackground)
-                .ignoresSafeArea()
-            
-            VStack(spacing: 0) {
+        VStack(spacing: 0) {
                 // Header
                 VStack(spacing: 4) {
                     Text("X Screenshots")
@@ -260,7 +256,7 @@ struct ContentView: View {
                 
                 Spacer(minLength: 20)
             }
-        }
+        .background(Color(UIColor.systemBackground).ignoresSafeArea())
         .photosPicker(isPresented: $showingImagePicker, selection: $selectedItem, matching: .images)
         .onChange(of: selectedItem) { oldValue, newValue in
             Task {
