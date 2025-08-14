@@ -75,7 +75,7 @@ struct ContentView: View {
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(maxWidth: frameSize, maxHeight: frameSize)
-                .clipShape(RoundedRectangle(cornerRadius: radius, style: cornerStyle))
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: radius, bottomLeadingRadius: radius, bottomTrailingRadius: radius, topTrailingRadius: radius, style: cornerStyle))
                 .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 10)
                 .scaleEffect(isExporting ? 0.95 : 1.0)
                 .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isExporting)
@@ -100,7 +100,7 @@ struct ContentView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-                // Header
+            // Header
                 VStack(spacing: 4) {
                     Text("X Screenshots")
                         .font(.system(size: 28, weight: .bold, design: .default))
@@ -126,7 +126,7 @@ struct ContentView: View {
                             }
                         }
                 }
-                .frame(height: UIScreen.main.bounds.width * 0.75)
+                .frame(height: min(UIScreen.main.bounds.width * 0.65, 280))
                 .padding(.horizontal, 24)
                 .padding(.bottom, 20)
                 
@@ -254,8 +254,10 @@ struct ContentView: View {
                     .padding(.horizontal, 24)
                 }
                 
-                Spacer(minLength: 20)
+                Spacer(minLength: 10)
             }
+        .safeAreaInset(edge: .top) { Color.clear.frame(height: 0) }
+        .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 0) }
         .background(Color.black.ignoresSafeArea())
         .photosPicker(isPresented: $showingImagePicker, selection: $selectedItem, matching: .images)
         .onChange(of: selectedItem) { oldValue, newValue in
@@ -294,7 +296,7 @@ struct ContentView: View {
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(maxWidth: frameSize, maxHeight: frameSize)
-                .clipShape(RoundedRectangle(cornerRadius: radius, style: cornerStyle))
+                .clipShape(UnevenRoundedRectangle(topLeadingRadius: radius, bottomLeadingRadius: radius, bottomTrailingRadius: radius, topTrailingRadius: radius, style: cornerStyle))
                 .shadow(color: .black.opacity(0.2), radius: 60, x: 0, y: 30)
                 .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: 10)
         }
