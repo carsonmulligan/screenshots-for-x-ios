@@ -31,7 +31,6 @@ struct ContentView: View {
     @State private var selectedItem: PhotosPickerItem?
     @State private var showingSaveAlert = false
     @State private var saveError = false
-    @State private var useIOSStyle = true
     @State private var isExporting = false
     
     enum BackgroundOption: String, CaseIterable {
@@ -57,11 +56,8 @@ struct ContentView: View {
     }
     
     func calculateRadius(for image: UIImage? = nil) -> CGFloat {
-        if useIOSStyle {
-            return cornerRadius * 1.5
-        } else {
-            return cornerRadius
-        }
+        // Simple corner radius that maintains rectangular shape
+        return cornerRadius
     }
     
     @ViewBuilder
@@ -69,13 +65,12 @@ struct ContentView: View {
         if let image = selectedImage {
             let frameSize = UIScreen.main.bounds.width * imageScale * 0.7
             let radius = calculateRadius()
-            let cornerStyle: RoundedCornerStyle = useIOSStyle ? .continuous : .circular
             
             Image(uiImage: image)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(maxWidth: frameSize, maxHeight: frameSize)
-                .clipShape(UnevenRoundedRectangle(topLeadingRadius: radius, bottomLeadingRadius: radius, bottomTrailingRadius: radius, topTrailingRadius: radius, style: cornerStyle))
+                .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
                 .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 10)
                 .scaleEffect(isExporting ? 0.95 : 1.0)
                 .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isExporting)
@@ -289,14 +284,13 @@ struct ContentView: View {
         if let image = selectedImage {
             let frameSize = 2000 * imageScale
             let exportScale = 2000.0 / UIScreen.main.bounds.width
-            let radius = calculateRadius() * exportScale * 1.2
-            let cornerStyle: RoundedCornerStyle = useIOSStyle ? .continuous : .circular
+            let radius = calculateRadius() * exportScale
             
             Image(uiImage: image)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(maxWidth: frameSize, maxHeight: frameSize)
-                .clipShape(UnevenRoundedRectangle(topLeadingRadius: radius, bottomLeadingRadius: radius, bottomTrailingRadius: radius, topTrailingRadius: radius, style: cornerStyle))
+                .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
                 .shadow(color: .black.opacity(0.2), radius: 60, x: 0, y: 30)
                 .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: 10)
         }
